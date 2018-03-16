@@ -1,0 +1,8 @@
+[package]
+name = "mmr"
+version = "0.1.0"
+authors = ["Stephen Sugden <me@stephensugden.com>"]
+
+[dependencies]
+clap = "2"
+exec = "0.3.1"
