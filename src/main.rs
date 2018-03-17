@@ -1,11 +1,11 @@
 #[macro_use]
 extern crate clap;
 extern crate exec;
+extern crate utime;
 
 use std::error::Error as ErrorTrait;
-use std::ffi::OsString;
 use std::fmt;
-use std::fs::File;
+use std::fs;
 use std::io;
 use std::io::{BufRead, Read, Write};
 use std::path::PathBuf;
@@ -13,7 +13,6 @@ use std::process;
 use std::time;
 
 use clap::ArgMatches;
-
 
 fn main() {
     let matches: ArgMatches = clap_app!(myapp =>
@@ -60,6 +59,12 @@ pub enum Error {
 impl From<io::Error> for Error {
     fn from(err: io::Error) -> Self {
         Error::IO(err)
+    }
+}
+
+impl From<time::SystemTimeError> for Error {
+    fn from(err: time::SystemTimeError) -> Self {
+        Error::Clock(err)
     }
 }
 
@@ -127,7 +132,6 @@ fn maybe_remind(path: PathBuf, args: &ArgMatches) -> Result<(), Error> {
         .modified()?
         .elapsed()
         .map_err(Error::Clock)?;
-    // todo - check --age CLI arg
     if age > time::Duration::new(min_age, 0) {
         print_file(path, args.is_present("subject"))?;
     }
@@ -135,7 +139,7 @@ fn maybe_remind(path: PathBuf, args: &ArgMatches) -> Result<(), Error> {
 }
 
 fn print_file(path: PathBuf, only_subject: bool) -> Result<(), Error> {
-    let mut reader = io::BufReader::new(File::open(path)?);
+    let mut reader = io::BufReader::new(fs::File::open(path.clone())?);
     let mut buf = Vec::with_capacity(2048);
     if only_subject {
         // hope you like unix line endings
@@ -144,5 +148,7 @@ fn print_file(path: PathBuf, only_subject: bool) -> Result<(), Error> {
         reader.read_to_end(&mut buf)?;
     }
     io::stdout().write(&buf)?;
+    let mtime = time::UNIX_EPOCH.elapsed()?;
+    utime::set_file_times(path.clone(), mtime.as_secs(), mtime.as_secs())?;
     Ok(())
 }
