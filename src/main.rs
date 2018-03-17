@@ -19,14 +19,18 @@ fn main() {
         (version: "0.1")
         (author: "Stephen Sugden <me@stephensugden.com>")
         (about: "Remember things in directories")
-        (@arg recursive: -r --recursive "Whether to search recursively for a .mmr file")
+        (@arg recursive: -r --recursive "Recursively search for .mmr file up to the root of the filesystem")
         (@subcommand edit =>
-            (about: "Edit (or create) an .mmr file in this directory")
+            (about: "Edit (or create) an .mmr file in the current directory")
         )
         (@subcommand remind =>
             (about: "Check for a .mmr file and print the contents if it's old enough")
-            (@arg age: -a --age +takes_value "Minimum age of the .mmr file (in seconds). If the file is newer than this it won't be printed")
+            (@arg age: -a --age +takes_value "Minimum age of the .mmr file in seconds, if the file has been modified more recently it won't be printed. Defaults to 45 minutes")
             (@arg subject: -s --subject "Print only the first line of the reminder file")
+        )
+        (@subcommand add =>
+            (about: "Append a line to the .mmr file, creating it if necessary.")
+            (@arg words: +multiple "What to append")
         )
         (@subcommand print =>
             (about: "Print the contents of the .mmr file regardless of it's age")
@@ -40,6 +44,13 @@ fn main() {
         ("edit", _) => edit(path),
         ("print", Some(print_args)) => print_file(path, print_args.is_present("subject")),
         ("remind", Some(remind_args)) => maybe_remind(path, remind_args),
+        ("add", Some(add_args)) => append_line(
+            path,
+            add_args
+                .values_of("words")
+                .map(|vs| vs.collect())
+                .unwrap_or(vec![]),
+        ),
         _ => edit(path),
     });
 
@@ -150,5 +161,13 @@ fn print_file(path: PathBuf, only_subject: bool) -> Result<(), Error> {
     io::stdout().write(&buf)?;
     let mtime = time::UNIX_EPOCH.elapsed()?;
     utime::set_file_times(path.clone(), mtime.as_secs(), mtime.as_secs())?;
+    Ok(())
+}
+
+fn append_line(path: PathBuf, words: Vec<&str>) -> Result<(), Error> {
+    let mut file = fs::OpenOptions::new().append(true).open(path)?;
+    let mut line = words.join(" ");
+    line.push('\n');
+    file.write_all(&line.as_bytes())?;
     Ok(())
 }
