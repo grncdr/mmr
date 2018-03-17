@@ -91,11 +91,11 @@ impl fmt::Display for Error {
 }
 
 fn edit(path: PathBuf) -> Result<(), Error> {
-    let editor = find_editor();
+    let editor = std::env::var("EDITOR").unwrap_or("vim".into());
     let arg1 = editor.clone();
     Err(Error::Exec(exec::execvp(
         editor,
-        &[arg1, path.into_os_string()],
+        &[arg1.into(), path.into_os_string()],
     )))
 }
 
@@ -114,10 +114,6 @@ fn find_mmr_file(recursive: bool) -> Result<PathBuf, io::Error> {
         path.pop();
         path.push(".mmr");
     }
-}
-
-fn find_editor() -> OsString {
-    "vim".into()
 }
 
 fn maybe_remind(path: PathBuf, args: &ArgMatches) -> Result<(), Error> {
