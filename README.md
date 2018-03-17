@@ -55,3 +55,7 @@ SUBCOMMANDS:
     print     Print the contents of the .mmr file regardless of it's age
     remind    Check for a .mmr file and print the contents if it's old enough
 ```
+
+## Acknowledgements
+
+This [idea came from @mntmn](https://twitter.com/mntmn/status/974671390845603841), I was bored and I liked it so here we are.
