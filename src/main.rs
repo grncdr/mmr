@@ -15,13 +15,13 @@ use std::time;
 use clap::ArgMatches;
 
 fn main() {
-    let matches: ArgMatches = clap_app!(myapp =>
+    let matches: ArgMatches = clap_app!(mmr =>
         (version: "0.1")
         (author: "Stephen Sugden <me@stephensugden.com>")
-        (about: "Remember things in directories")
-        (@arg recursive: -r --recursive "Recursively search for .mmr file up to the root of the filesystem")
+        (about: "Leave reminders for yourself in directories")
+        (@arg recursive: -r --recursive "Recursively search for .mmr file up to the root of the filesystem instead of only the current directory.")
         (@subcommand edit =>
-            (about: "Edit (or create) an .mmr file in the current directory")
+            (about: "Open the .mmr file in your $EDITOR")
         )
         (@subcommand remind =>
             (about: "Check for a .mmr file and print the contents if it's old enough")
